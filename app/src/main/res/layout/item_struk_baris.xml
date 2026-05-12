@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="6dp">
+
+    <TextView
+        android:id="@+id/tvItemNama"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_toStartOf="@+id/tvItemQty"
+        android:text="Nama Produk"
+        android:textColor="#1A1A1A"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvItemQty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:text="x1"
+        android:textColor="#9E9E9E"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/tvItemHarga"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:text="Rp 0"
+        android:textColor="#1A1A1A"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+</RelativeLayout>
