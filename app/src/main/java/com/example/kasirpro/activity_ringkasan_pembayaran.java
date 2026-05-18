@@ -164,13 +164,14 @@ public class activity_ringkasan_pembayaran extends AppCompatActivity {
         }
         String namaItems = sbItems.toString();
 
-        Calendar cal = Calendar.getInstance();
+        Calendar cal = Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Jakarta"));
         String dd   = String.format("%02d", cal.get(Calendar.DAY_OF_MONTH));
         String mm   = String.format("%02d", cal.get(Calendar.MONTH) + 1);
         String yyyy = String.valueOf(cal.get(Calendar.YEAR));
+        String jam  = String.format("%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE));
 
         // Simpan ke SQLite
-        dbHelper.simpanTransaksi(emailUserLogin, namaItems, metodeTerpilih, totalHarga, dd, mm, yyyy);
+        dbHelper.simpanTransaksi(emailUserLogin, namaItems, metodeTerpilih, totalHarga, dd, mm, yyyy, jam);
 
         // Simpan ke SharedPreferences untuk dashboard
         SharedPreferences revPref = getSharedPreferences("DATA_REVENUE_" + emailUserLogin, MODE_PRIVATE);

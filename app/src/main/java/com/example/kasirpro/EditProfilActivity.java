@@ -34,17 +34,19 @@ public class EditProfilActivity extends AppCompatActivity {
 
     private TextInputEditText etEmailProfil, etNamaBisnisProfil, etAlamatProfil;
     private TextInputEditText etPasswordBaruProfil, etKonfirmasiPasswordProfil;
-    private ImageView imgQrisProfilPreview;
+    private ImageView imgQrisProfilPreview, ivFotoProfilPreview, ivFotoProfilDefault;
     private LinearLayout layoutQrisPlaceholder;
-    private MaterialCardView btnUploadQrisProfil;
+    private MaterialCardView btnUploadQrisProfil, btnFotoProfil;
     private MaterialButton btnSimpanProfil;
     private ImageButton btnBackProfil;
 
     private DatabaseHelper dbHelper;
-    private String emailUser, qrisPathBaru = "";
+    private String emailUser, qrisPathBaru = "", fotoProfilBaru = "";
 
-    private static final int PICK_IMAGE_REQUEST = 1;
+    private static final int PICK_QRIS_REQUEST   = 1;
+    private static final int PICK_FOTO_REQUEST   = 2;
     private static final int PERMISSION_REQUEST_CODE = 100;
+    private int pendingPickType = 0; // 1=QRIS, 2=foto profil
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,7 +62,8 @@ public class EditProfilActivity extends AppCompatActivity {
         muatDataProfil();
 
         btnBackProfil.setOnClickListener(v -> finish());
-        btnUploadQrisProfil.setOnClickListener(v -> cekIzinLaluBukaGallery());
+        btnFotoProfil.setOnClickListener(v -> { pendingPickType = 2; cekIzinLaluBukaGallery(); });
+        btnUploadQrisProfil.setOnClickListener(v -> { pendingPickType = 1; cekIzinLaluBukaGallery(); });
         btnSimpanProfil.setOnClickListener(v -> simpanPerubahan());
     }
 
@@ -71,28 +74,47 @@ public class EditProfilActivity extends AppCompatActivity {
         etPasswordBaruProfil       = findViewById(R.id.etPasswordBaruProfil);
         etKonfirmasiPasswordProfil = findViewById(R.id.etKonfirmasiPasswordProfil);
         imgQrisProfilPreview       = findViewById(R.id.imgQrisProfilPreview);
+        ivFotoProfilPreview        = findViewById(R.id.ivFotoProfilPreview);
+        ivFotoProfilDefault        = findViewById(R.id.ivFotoProfilDefault);
         layoutQrisPlaceholder      = findViewById(R.id.layoutQrisPlaceholder);
         btnUploadQrisProfil        = findViewById(R.id.btnUploadQrisProfil);
+        btnFotoProfil              = findViewById(R.id.btnFotoProfil);
         btnSimpanProfil            = findViewById(R.id.btnSimpanProfil);
         btnBackProfil              = findViewById(R.id.btnBackProfil);
     }
 
     private void muatDataProfil() {
         if (emailUser.isEmpty()) return;
-
         etEmailProfil.setText(emailUser);
-
         String[] data = dbHelper.getUserData(emailUser);
         if (data != null) {
-            etNamaBisnisProfil.setText(data[0]); // nama_bisnis
-            etAlamatProfil.setText(data[1]);     // alamat_bisnis
-
-            // Tampilkan QRIS yang sudah ada
-            String qrisLama = data[2];
-            if (qrisLama != null && !qrisLama.isEmpty()) {
-                tampilkanGambarQris(qrisLama);
-                qrisPathBaru = qrisLama; // gunakan yang lama jika tidak diganti
+            etNamaBisnisProfil.setText(data[0]);
+            etAlamatProfil.setText(data[1]);
+            // QRIS
+            if (data[2] != null && !data[2].isEmpty()) {
+                qrisPathBaru = data[2];
+                tampilkanGambarQris(qrisPathBaru);
             }
+            // Foto profil (index 4)
+            if (data.length > 4 && data[4] != null && !data[4].isEmpty()) {
+                fotoProfilBaru = data[4];
+                tampilFotoProfil(fotoProfilBaru);
+            }
+        }
+    }
+
+    private void tampilFotoProfil(String path) {
+        try {
+            if (ivFotoProfilPreview == null) return;
+            ivFotoProfilPreview.setVisibility(View.VISIBLE);
+            if (ivFotoProfilDefault != null) ivFotoProfilDefault.setVisibility(View.GONE);
+            Object src = path.startsWith("/") ? new File(path) : Uri.parse(path);
+            Glide.with(this).load(src).centerCrop()
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .into(ivFotoProfilPreview);
+        } catch (Exception e) {
+            if (ivFotoProfilPreview != null)
+                ivFotoProfilPreview.setImageResource(android.R.drawable.ic_menu_gallery);
         }
     }
 
@@ -135,6 +157,11 @@ public class EditProfilActivity extends AppCompatActivity {
                 pwBaru.isEmpty() ? null : pwBaru,
                 qrisPathBaru.isEmpty() ? null : qrisPathBaru);
 
+        // Simpan foto profil jika ada
+        if (!fotoProfilBaru.isEmpty()) {
+            dbHelper.updateFotoProfil(emailUser, fotoProfilBaru);
+        }
+
         if (sukses) {
             Toast.makeText(this, "Profil berhasil diperbarui!", Toast.LENGTH_SHORT).show();
             setResult(RESULT_OK);
@@ -170,17 +197,18 @@ public class EditProfilActivity extends AppCompatActivity {
     }
 
     private void bukaGallery() {
+        int reqCode = pendingPickType == 2 ? PICK_FOTO_REQUEST : PICK_QRIS_REQUEST;
         try {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-            startActivityForResult(intent, PICK_IMAGE_REQUEST);
+            startActivityForResult(intent, reqCode);
         } catch (Exception e) {
             try {
                 Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
                 fallback.setType("image/*");
-                startActivityForResult(fallback, PICK_IMAGE_REQUEST);
+                startActivityForResult(fallback, reqCode);
             } catch (Exception ex) {
                 Toast.makeText(this, "Tidak dapat membuka galeri", Toast.LENGTH_SHORT).show();
             }
@@ -190,21 +218,20 @@ public class EditProfilActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK
-                && data != null && data.getData() != null) {
+        if ((requestCode == PICK_QRIS_REQUEST || requestCode == PICK_FOTO_REQUEST)
+                && resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri uri = data.getData();
             try {
-                // Copy ke internal storage agar permanen
-                String savedPath = salinGambarKeInternal(uri);
-                if (savedPath != null) {
-                    qrisPathBaru = savedPath;
-                    tampilkanGambarQris(savedPath);
+                String savedPath = salinGambarKeInternal(uri,
+                        requestCode == PICK_FOTO_REQUEST ? "foto_profil" : "qris_images");
+                String finalPath = savedPath != null ? savedPath : uri.toString();
+
+                if (requestCode == PICK_FOTO_REQUEST) {
+                    fotoProfilBaru = finalPath;
+                    tampilFotoProfil(finalPath);
                 } else {
-                    try {
-                        getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    } catch (SecurityException ignored) {}
-                    qrisPathBaru = uri.toString();
-                    tampilkanGambarQris(qrisPathBaru);
+                    qrisPathBaru = finalPath;
+                    tampilkanGambarQris(finalPath);
                 }
             } catch (Exception e) {
                 Toast.makeText(this, "Gagal memuat gambar", Toast.LENGTH_SHORT).show();
@@ -212,27 +239,21 @@ public class EditProfilActivity extends AppCompatActivity {
         }
     }
 
-    private String salinGambarKeInternal(Uri sourceUri) {
+    private String salinGambarKeInternal(Uri sourceUri, String folderName) {
         try {
             InputStream inputStream = getContentResolver().openInputStream(sourceUri);
             if (inputStream == null) return null;
-
-            File folder = new File(getFilesDir(), "qris_images");
+            File folder = new File(getFilesDir(), folderName);
             if (!folder.exists()) folder.mkdirs();
-
-            File fileOutput = new File(folder, "qris_" + System.currentTimeMillis() + ".jpg");
+            File fileOutput = new File(folder, folderName + "_" + System.currentTimeMillis() + ".jpg");
             OutputStream outputStream = new FileOutputStream(fileOutput);
             byte[] buffer = new byte[4096];
             int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, bytesRead);
-            }
+            while ((bytesRead = inputStream.read(buffer)) != -1) outputStream.write(buffer, 0, bytesRead);
             outputStream.close();
             inputStream.close();
             return fileOutput.getAbsolutePath();
-        } catch (Exception e) {
-            return null;
-        }
+        } catch (Exception e) { return null; }
     }
 
     private String getText(TextInputEditText field) {

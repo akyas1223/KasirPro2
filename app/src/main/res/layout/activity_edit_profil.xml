@@ -4,40 +4,87 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFF">
+    android:background="#F4F7FF"
+    android:fitsSystemWindows="true">
 
-    <!-- Header -->
-    <RelativeLayout
-        android:id="@+id/header"
+    <!-- Header biru — lebih tinggi agar avatar + teks tidak tertutup card -->
+    <LinearLayout
+        android:id="@+id/headerBlue"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:background="@android:color/white"
-        android:elevation="2dp"
-        android:paddingHorizontal="16dp">
+        android:layout_height="260dp"
+        android:background="#2155D3"
+        android:orientation="vertical"
+        android:paddingTop="16dp"
+        android:paddingHorizontal="20dp">
 
         <ImageButton
             android:id="@+id/btnBackProfil"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_centerVertical="true"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
             android:src="@drawable/baseline_arrow_back_ios_24"
-            app:tint="#2155D3" />
+            app:tint="@android:color/white" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="Edit Profil"
-            android:textColor="#1A1A1A"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-    </RelativeLayout>
+        <!-- Avatar + teks tap — gravity center, paddingBottom kecil agar tidak tertutup -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingBottom="20dp">
 
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btnFotoProfil"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardCornerRadius="50dp"
+                app:cardElevation="6dp"
+                app:cardBackgroundColor="#FFFFFF"
+                app:strokeColor="#FFFFFF"
+                app:strokeWidth="3dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <ImageView
+                        android:id="@+id/ivFotoProfilDefault"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="22dp"
+                        android:scaleType="centerInside"
+                        android:src="@android:drawable/ic_menu_camera"
+                        app:tint="#2155D3" />
+
+                    <ImageView
+                        android:id="@+id/ivFotoProfilPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone" />
+                </FrameLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Tap foto untuk mengubah"
+                android:textColor="#AACCFF"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- ScrollView mulai lebih bawah agar teks header tidak tertutup -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="64dp"
+        android:layout_marginTop="230dp"
         android:clipToPadding="false"
         android:paddingBottom="100dp">
 
@@ -45,104 +92,22 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="20dp">
 
-            <!-- Foto/Avatar QRIS -->
+            <!-- Satu card untuk semua field -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="20dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp">
+                app:cardElevation="3dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="#FFFFFF">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="20dp"
-                    android:gravity="center">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Foto QRIS Pembayaran"
-                        android:textColor="#757575"
-                        android:textSize="13sp"
-                        android:layout_marginBottom="12dp" />
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/btnUploadQrisProfil"
-                        android:layout_width="match_parent"
-                        android:layout_height="160dp"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="0dp"
-                        app:strokeColor="#E0E8FF"
-                        app:strokeWidth="1.5dp"
-                        app:cardBackgroundColor="#F0F5FF"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:foreground="?attr/selectableItemBackground">
-
-                        <FrameLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent">
-
-                            <ImageView
-                                android:id="@+id/imgQrisProfilPreview"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop"
-                                android:visibility="gone" />
-
-                            <LinearLayout
-                                android:id="@+id/layoutQrisPlaceholder"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:orientation="vertical"
-                                android:gravity="center">
-
-                                <ImageView
-                                    android:layout_width="40dp"
-                                    android:layout_height="40dp"
-                                    android:src="@drawable/baseline_qr_code_scanner_24"
-                                    app:tint="#2155D3" />
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="Tap untuk ganti foto QRIS"
-                                    android:textColor="#2155D3"
-                                    android:textSize="13sp" />
-                            </LinearLayout>
-                        </FrameLayout>
-                    </com.google.android.material.card.MaterialCardView>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Form Data -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="2dp"
-                app:strokeWidth="0dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Data Bisnis"
-                        android:textColor="#1A1A1A"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="16dp" />
+                    android:padding="24dp">
 
                     <!-- Email (read-only) -->
                     <com.google.android.material.textfield.TextInputLayout
@@ -154,15 +119,17 @@
                         app:boxCornerRadiusTopStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
-                        app:boxCornerRadiusBottomEnd="12dp">
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:startIconDrawable="@android:drawable/ic_dialog_email"
+                        app:startIconTint="#BDBDBD">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etEmailProfil"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:enabled="false"
-                            android:textColor="#9E9E9E"
-                            android:inputType="textEmailAddress" />
+                            android:inputType="textEmailAddress"
+                            android:textColor="#9E9E9E" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <!-- Nama Bisnis -->
@@ -175,7 +142,10 @@
                         app:boxCornerRadiusTopStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
-                        app:boxCornerRadiusBottomEnd="12dp">
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#2155D3"
+                        app:startIconDrawable="@android:drawable/ic_menu_myplaces"
+                        app:startIconTint="#2155D3">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNamaBisnisProfil"
@@ -194,7 +164,10 @@
                         app:boxCornerRadiusTopStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
-                        app:boxCornerRadiusBottomEnd="12dp">
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#2155D3"
+                        app:startIconDrawable="@android:drawable/ic_dialog_map"
+                        app:startIconTint="#2155D3">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etAlamatProfil"
@@ -204,21 +177,6 @@
                             android:minLines="2" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:background="#F0F0F0"
-                        android:layout_marginVertical="8dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Ganti Password (opsional)"
-                        android:textColor="#1A1A1A"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="16dp" />
-
                     <!-- Password Baru -->
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
@@ -226,11 +184,14 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="4dp"
                         android:hint="Password Baru"
-                        app:passwordToggleEnabled="true"
                         app:boxCornerRadiusTopStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
-                        app:boxCornerRadiusBottomEnd="12dp">
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#2155D3"
+                        app:endIconMode="password_toggle"
+                        app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+                        app:startIconTint="#2155D3">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etPasswordBaruProfil"
@@ -253,12 +214,16 @@
                         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
                         android:hint="Konfirmasi Password Baru"
-                        app:passwordToggleEnabled="true"
                         app:boxCornerRadiusTopStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
-                        app:boxCornerRadiusBottomEnd="12dp">
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxStrokeColor="#2155D3"
+                        app:endIconMode="password_toggle"
+                        app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+                        app:startIconTint="#2155D3">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etKonfirmasiPasswordProfil"
@@ -267,13 +232,73 @@
                             android:inputType="textPassword" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- QRIS -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:text="Foto QRIS Pembayaran"
+                        android:textColor="#1A1A1A"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/btnUploadQrisProfil"
+                        android:layout_width="match_parent"
+                        android:layout_height="120dp"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        app:cardBackgroundColor="#EEF3FF"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="#2155D3"
+                        app:strokeWidth="1.5dp">
+
+                        <FrameLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                            <ImageView
+                                android:id="@+id/imgQrisProfilPreview"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:padding="8dp"
+                                android:scaleType="centerInside"
+                                android:visibility="gone" />
+
+                            <LinearLayout
+                                android:id="@+id/layoutQrisPlaceholder"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <ImageView
+                                    android:layout_width="32dp"
+                                    android:layout_height="32dp"
+                                    android:src="@drawable/baseline_qr_code_scanner_24"
+                                    app:tint="#2155D3" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="Tap untuk ganti foto QRIS"
+                                    android:textColor="#2155D3"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+                            </LinearLayout>
+                        </FrameLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </ScrollView>
 
-    <!-- Tombol Simpan -->
+    <!-- Tombol Simpan fixed di bawah -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnSimpanProfil"
         android:layout_width="match_parent"
@@ -282,8 +307,9 @@
         android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="24dp"
         android:text="Simpan Perubahan"
-        android:textStyle="bold"
+        android:textAllCaps="false"
         android:textSize="15sp"
+        android:textStyle="bold"
         app:backgroundTint="#2155D3"
         app:cornerRadius="16dp"
         app:elevation="4dp" />

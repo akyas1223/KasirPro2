@@ -120,7 +120,7 @@ public class beranda extends AppCompatActivity {
                 } else {
                     dataNeedsRefresh = false; // ke halaman bayar, gambar tidak perlu reload
                     Intent intent = new Intent(beranda.this, activity_ringkasan_pembayaran.class);
-                    intent.putExtra("DATA_BELANJA", listBelanja);
+                    intent.putExtra("DATA_BELANJA", new ArrayList<>(listBelanja)); // kirim copy, bukan referensi asli
                     intent.putExtra("EMAIL_USER", emailUserLogin);
                     startActivityForResult(intent, REQ_BAYAR);
                 }
@@ -164,6 +164,18 @@ public class beranda extends AppCompatActivity {
 
             if (tvNama != null) tvNama.setText(namaLogin != null ? namaLogin : "Kasir");
             if (tvEmail != null) tvEmail.setText(emailUserLogin);
+
+            // Load foto profil di header drawer
+            ImageView ivFotoProfil = headerView.findViewById(R.id.ivFotoProfil);
+            ImageView ivDefault    = headerView.findViewById(R.id.ivFotoProfilDefault);
+            String fotoProfil = dbHelper.getFotoProfil(emailUserLogin);
+            if (ivFotoProfil != null && fotoProfil != null && !fotoProfil.isEmpty()) {
+                ivFotoProfil.setVisibility(android.view.View.VISIBLE);
+                if (ivDefault != null) ivDefault.setVisibility(android.view.View.GONE);
+                Object src = fotoProfil.startsWith("/")
+                        ? new java.io.File(fotoProfil) : android.net.Uri.parse(fotoProfil);
+                com.bumptech.glide.Glide.with(this).load(src).circleCrop().into(ivFotoProfil);
+            }
 
             // Klik profil/foto di header drawer → buka EditProfil
             View cardProfile = headerView.findViewById(R.id.cardProfile);
@@ -321,15 +333,59 @@ public class beranda extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 200 && resultCode == RESULT_OK) {
-            // Profil diperbarui — refresh nama di header drawer
-            NavigationView navigationView = findViewById(R.id.nav_view);
-            if (navigationView != null) {
-                View headerView = navigationView.getHeaderView(0);
-                TextView tvNama = headerView.findViewById(R.id.tv_nama_profil);
-                String namaBaru = dbHelper.getNamaBisnis(emailUserLogin);
-                if (tvNama != null) tvNama.setText(namaBaru);
+
+        if (requestCode == REQ_BAYAR) {
+            if (data != null && data.getBooleanExtra("CLEAR_CART", false)) {
+                // Transaksi selesai — kosongkan keranjang
+                kosongkanKeranjang();
+            } else {
+                // Kembali tanpa bayar — sinkronkan keranjang dengan data terbaru dari ringkasan
+                if (data != null) {
+                    ArrayList<item_keranjang> updatedCart =
+                            (ArrayList<item_keranjang>) data.getSerializableExtra("DATA_BELANJA");
+                    if (updatedCart != null) {
+                        listBelanja.clear();
+                        listBelanja.addAll(updatedCart);
+                    }
+                }
+                refreshBottomBar();
             }
+        }
+
+        if (requestCode == 200 && resultCode == RESULT_OK) {
+            // Refresh seluruh header drawer — nama + foto profil
+            refreshDrawerHeader();
+        }
+    }
+
+    private void refreshDrawerHeader() {
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        if (navigationView == null) return;
+        View headerView = navigationView.getHeaderView(0);
+
+        TextView tvNama  = headerView.findViewById(R.id.tv_nama_profil);
+        TextView tvEmail = headerView.findViewById(R.id.tv_email_profil);
+        ImageView ivFoto    = headerView.findViewById(R.id.ivFotoProfil);
+        ImageView ivDefault = headerView.findViewById(R.id.ivFotoProfilDefault);
+
+        String namaBaru = dbHelper.getNamaBisnis(emailUserLogin);
+        if (tvNama  != null) tvNama.setText(namaBaru != null ? namaBaru : "Kasir");
+        if (tvEmail != null) tvEmail.setText(emailUserLogin);
+
+        String fotoBaru = dbHelper.getFotoProfil(emailUserLogin);
+        if (ivFoto != null && fotoBaru != null && !fotoBaru.isEmpty()) {
+            ivFoto.setVisibility(android.view.View.VISIBLE);
+            if (ivDefault != null) ivDefault.setVisibility(android.view.View.GONE);
+            Object src = fotoBaru.startsWith("/")
+                    ? new java.io.File(fotoBaru) : android.net.Uri.parse(fotoBaru);
+            com.bumptech.glide.Glide.with(this).load(src)
+                    .circleCrop()
+                    .skipMemoryCache(true) // paksa reload tanpa cache
+                    .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE)
+                    .into(ivFoto);
+        } else {
+            if (ivFoto    != null) ivFoto.setVisibility(android.view.View.GONE);
+            if (ivDefault != null) ivDefault.setVisibility(android.view.View.VISIBLE);
         }
     }
 

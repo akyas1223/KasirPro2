@@ -8,10 +8,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -23,21 +21,36 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class register extends AppCompatActivity {
 
-    private EditText etEmail, etPassword, etNamaBisnis, etAlamatBisnis;
+    private TextInputEditText etEmail, etPassword, etNamaBisnis, etAlamatBisnis;
     private CheckBox cbSyarat;
-    private Button btnDaftarSubmit;
-    private ImageView btnBack, imgQrisPreview;
-    private MaterialCardView btnUploadQris;
+    private MaterialButton btnDaftarSubmit;
+    private ImageButton btnBack;
     private TextView tvLoginLink, tvLabelUpload;
+    private MaterialCardView btnUploadQris, btnFotoProfil;
+    private ImageView imgQrisPreview, ivFotoProfilPreview, ivFotoProfilDefault;
     private LinearLayout layoutPlaceholder;
     private DatabaseHelper dbHelper;
 
     private String qrisPath = "";
-    private static final int PICK_IMAGE_REQUEST = 1;
+    private String fotoProfilPath = "";
+
+    private static final int PICK_QRIS_REQUEST  = 1;
+    private static final int PICK_FOTO_REQUEST  = 2;
+    private static final int PERMISSION_REQUEST_CODE = 100;
+    private int pendingPickType = 0; // 1=QRIS, 2=foto profil
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,24 +60,41 @@ public class register extends AppCompatActivity {
 
         dbHelper = new DatabaseHelper(this);
 
-        // Inisialisasi Views - Sesuaikan ID dengan XML
-        etEmail = findViewById(R.id.etEmailReg);
-        etPassword = findViewById(R.id.etPasswordReg);
-        etNamaBisnis = findViewById(R.id.etNamaBisnis);
+        etEmail        = findViewById(R.id.etEmailReg);
+        etPassword     = findViewById(R.id.etPasswordReg);
+        etNamaBisnis   = findViewById(R.id.etNamaBisnis);
         etAlamatBisnis = findViewById(R.id.etAlamatBisnis);
-        cbSyarat = findViewById(R.id.cbSyarat);
+        cbSyarat       = findViewById(R.id.cbSyarat);
         btnDaftarSubmit = findViewById(R.id.btnDaftarSubmit);
-        btnBack = findViewById(R.id.btnBack);
-        tvLoginLink = findViewById(R.id.tvLoginLink);
+        btnBack        = findViewById(R.id.btnBack);
+        tvLoginLink    = findViewById(R.id.tvLoginLink);
 
-        btnUploadQris = findViewById(R.id.btnUploadQris);
-        imgQrisPreview = findViewById(R.id.imgQrisPreview);
-        tvLabelUpload = findViewById(R.id.tvLabelUpload); // Sekarang ID ini ada di XML
+        // QRIS
+        btnUploadQris    = findViewById(R.id.btnUploadQris);
+        imgQrisPreview   = findViewById(R.id.imgQrisPreview);
+        tvLabelUpload    = findViewById(R.id.tvLabelUpload);
         layoutPlaceholder = findViewById(R.id.layoutPlaceholder);
+
+        // Foto Profil
+        btnFotoProfil       = findViewById(R.id.btnFotoProfil);
+        ivFotoProfilPreview = findViewById(R.id.ivFotoProfilPreview);
+        ivFotoProfilDefault = findViewById(R.id.ivFotoProfilDefault);
 
         btnBack.setOnClickListener(v -> finish());
 
-        btnUploadQris.setOnClickListener(v -> cekIzinLaluBukaGallery());
+        // Klik foto profil
+        if (btnFotoProfil != null) {
+            btnFotoProfil.setOnClickListener(v -> {
+                pendingPickType = 2;
+                cekIzinLaluBukaGallery();
+            });
+        }
+
+        // Klik upload QRIS
+        btnUploadQris.setOnClickListener(v -> {
+            pendingPickType = 1;
+            cekIzinLaluBukaGallery();
+        });
 
         tvLoginLink.setOnClickListener(v -> {
             startActivity(new Intent(register.this, login.class));
@@ -72,26 +102,30 @@ public class register extends AppCompatActivity {
         });
 
         btnDaftarSubmit.setOnClickListener(v -> {
-            String email = etEmail.getText().toString().trim();
-            String password = etPassword.getText().toString().trim();
-            String nama = etNamaBisnis.getText().toString().trim();
-            String alamat = etAlamatBisnis.getText().toString().trim();
+            String email   = getText(etEmail);
+            String password = getText(etPassword);
+            String nama    = getText(etNamaBisnis);
+            String alamat  = getText(etAlamatBisnis);
 
             if (email.isEmpty() || password.isEmpty() || nama.isEmpty() || alamat.isEmpty()) {
                 Toast.makeText(this, "Mohon lengkapi semua data", Toast.LENGTH_SHORT).show();
             } else if (qrisPath.isEmpty()) {
-                Toast.makeText(this, "Mohon upload gambar QRIS Anda", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Mohon upload gambar QRIS", Toast.LENGTH_SHORT).show();
             } else if (!cbSyarat.isChecked()) {
                 Toast.makeText(this, "Anda harus menyetujui syarat & ketentuan", Toast.LENGTH_SHORT).show();
             } else {
                 boolean berhasil = dbHelper.simpanUser(email, password, nama, alamat, qrisPath);
-
                 if (berhasil) {
+                    // Simpan foto profil jika ada
+                    if (!fotoProfilPath.isEmpty()) {
+                        dbHelper.updateFotoProfil(email, fotoProfilPath);
+                    }
+
                     SharedPreferences session = getSharedPreferences("SESSION_KASIR", MODE_PRIVATE);
-                    SharedPreferences.Editor editor = session.edit();
-                    editor.putString("logged_in_user", email);
-                    editor.putBoolean("is_logged_in", true);
-                    editor.apply();
+                    session.edit()
+                            .putString("logged_in_user", email)
+                            .putBoolean("is_logged_in", true)
+                            .apply();
 
                     Toast.makeText(this, "Pendaftaran Berhasil!", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(register.this, beranda.class);
@@ -99,16 +133,14 @@ public class register extends AppCompatActivity {
                     startActivity(intent);
                     finish();
                 } else {
-                    Toast.makeText(this, "Pendaftaran Gagal (Email sudah terdaftar)", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Email sudah terdaftar", Toast.LENGTH_SHORT).show();
                 }
             }
         });
     }
 
-    private static final int PERMISSION_REQUEST_CODE = 100;
-
     private void cekIzinLaluBukaGallery() {
-        String permission = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+        String permission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
                 ? Manifest.permission.READ_MEDIA_IMAGES
                 : Manifest.permission.READ_EXTERNAL_STORAGE;
 
@@ -123,28 +155,27 @@ public class register extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                bukaGallery();
-            } else {
-                Toast.makeText(this, "Izin akses galeri diperlukan", Toast.LENGTH_LONG).show();
-            }
+        if (requestCode == PERMISSION_REQUEST_CODE &&
+                grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            bukaGallery();
+        } else {
+            Toast.makeText(this, "Izin akses galeri diperlukan", Toast.LENGTH_LONG).show();
         }
     }
 
     private void bukaGallery() {
+        int reqCode = pendingPickType == 2 ? PICK_FOTO_REQUEST : PICK_QRIS_REQUEST;
         try {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
             intent.addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("image/*");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-            startActivityForResult(intent, PICK_IMAGE_REQUEST);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+            startActivityForResult(intent, reqCode);
         } catch (Exception e) {
             try {
                 Intent fallback = new Intent(Intent.ACTION_GET_CONTENT);
                 fallback.setType("image/*");
-                startActivityForResult(fallback, PICK_IMAGE_REQUEST);
+                startActivityForResult(fallback, reqCode);
             } catch (Exception ex) {
                 Toast.makeText(this, "Tidak dapat membuka galeri", Toast.LENGTH_SHORT).show();
             }
@@ -154,31 +185,58 @@ public class register extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri imageUri = data.getData();
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
 
-            try {
-                try {
-                    // FIX: wrap dalam try-catch tersendiri — tidak semua URI support persistable
-                    getContentResolver().takePersistableUriPermission(imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                } catch (SecurityException se) {
-                    // URI tidak support persistable, lanjutkan saja
+        Uri uri = data.getData();
+        try {
+            if (requestCode == PICK_FOTO_REQUEST) {
+                // Foto profil
+                String saved = salinGambarKeInternal(uri, "foto_profil");
+                fotoProfilPath = saved != null ? saved : uri.toString();
+                if (ivFotoProfilPreview != null) {
+                    ivFotoProfilPreview.setVisibility(View.VISIBLE);
+                    Glide.with(this).load(new File(fotoProfilPath.startsWith("/")
+                            ? fotoProfilPath : uri.getPath())).centerCrop().into(ivFotoProfilPreview);
+                    if (ivFotoProfilDefault != null) ivFotoProfilDefault.setVisibility(View.GONE);
                 }
-                qrisPath = imageUri.toString();
-
-                // Munculkan Preview
-                imgQrisPreview.setVisibility(View.VISIBLE);
-                imgQrisPreview.setImageURI(imageUri);
-
-                // Sembunyikan Placeholder (Ikon dan Teks)
-                if (layoutPlaceholder != null) {
-                    layoutPlaceholder.setVisibility(View.GONE);
+            } else if (requestCode == PICK_QRIS_REQUEST) {
+                // QRIS
+                String saved = salinGambarKeInternal(uri, "qris_images");
+                qrisPath = saved != null ? saved : uri.toString();
+                if (imgQrisPreview != null) {
+                    imgQrisPreview.setVisibility(View.VISIBLE);
+                    Glide.with(this).load(fotoProfilPath.startsWith("/")
+                            ? new File(qrisPath) : uri).centerInside().into(imgQrisPreview);
                 }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Gagal memuat gambar", Toast.LENGTH_SHORT).show();
+                if (layoutPlaceholder != null) layoutPlaceholder.setVisibility(View.GONE);
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Gagal memuat gambar", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private String salinGambarKeInternal(Uri sourceUri, String folderName) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(sourceUri);
+            if (inputStream == null) return null;
+            File folder = new File(getFilesDir(), folderName);
+            if (!folder.exists()) folder.mkdirs();
+            File fileOutput = new File(folder, folderName + "_" + System.currentTimeMillis() + ".jpg");
+            OutputStream outputStream = new FileOutputStream(fileOutput);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) outputStream.write(buffer, 0, bytesRead);
+            outputStream.close();
+            inputStream.close();
+            return fileOutput.getAbsolutePath();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String getText(TextInputEditText field) {
+        if (field == null || field.getText() == null) return "";
+        return field.getText().toString().trim();
     }
 }

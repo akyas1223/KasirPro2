@@ -116,6 +116,7 @@ public class riwayat_transaksi extends AppCompatActivity {
                 int idxItems = cursor.getColumnIndex(DatabaseHelper.COL_NAMA_ITEM_TRANS);
                 int idxMetode = cursor.getColumnIndex(DatabaseHelper.COL_METODE_BAYAR);
                 int idxTotal = cursor.getColumnIndex(DatabaseHelper.COL_TOTAL_BAYAR);
+                int idxJam = cursor.getColumnIndex(DatabaseHelper.COL_JAM);
 
                 // Jika kolom tidak ditemukan, coba dengan nama alternatif
                 if (idxItems == -1) idxItems = cursor.getColumnIndex("items");
@@ -127,8 +128,10 @@ public class riwayat_transaksi extends AppCompatActivity {
                     String items = (idxItems != -1) ? cursor.getString(idxItems) : "-";
                     String metode = (idxMetode != -1) ? cursor.getString(idxMetode) : "-";
                     int total = (idxTotal != -1) ? cursor.getInt(idxTotal) : 0;
+                    String jam = (idxJam != -1) ? cursor.getString(idxJam) : "--:--";
+                    if (jam == null || jam.isEmpty()) jam = "--:--";
 
-                    listTransaksi.add(new Transaksi(items, metode, total));
+                    listTransaksi.add(new Transaksi(items, metode, total, jam));
                 }
             }
 

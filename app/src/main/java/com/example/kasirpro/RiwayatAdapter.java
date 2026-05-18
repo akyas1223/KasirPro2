@@ -29,12 +29,15 @@ public class RiwayatAdapter extends RecyclerView.Adapter<RiwayatAdapter.RiwayatV
     public void onBindViewHolder(@NonNull RiwayatViewHolder holder, int position) {
         Transaksi transaksi = transaksiList.get(position);
 
-        // ✅ Pakai method yang ADA di Transaksi.java Anda
         holder.tvNamaItem.setText(transaksi.getNamaItems());
         holder.tvMetode.setText(transaksi.getMetodeBayar());
 
         String formattedHarga = String.format("%,d", (long) transaksi.getTotalBayar()).replace(',', '.');
         holder.tvTotal.setText("Rp " + formattedHarga);
+
+        if (holder.tvWaktu != null) {
+            holder.tvWaktu.setText(transaksi.getJam());
+        }
     }
 
     @Override
@@ -48,13 +51,14 @@ public class RiwayatAdapter extends RecyclerView.Adapter<RiwayatAdapter.RiwayatV
     }
 
     public static class RiwayatViewHolder extends RecyclerView.ViewHolder {
-        TextView tvNamaItem, tvMetode, tvTotal;
+        TextView tvNamaItem, tvMetode, tvTotal, tvWaktu;
 
         public RiwayatViewHolder(@NonNull View itemView) {
             super(itemView);
             tvNamaItem = itemView.findViewById(R.id.tv_nama_item);
-            tvMetode = itemView.findViewById(R.id.tv_metode);
-            tvTotal = itemView.findViewById(R.id.tv_total_harga);
+            tvMetode   = itemView.findViewById(R.id.tv_metode);
+            tvTotal    = itemView.findViewById(R.id.tv_total_harga);
+            tvWaktu    = itemView.findViewById(R.id.tv_waktu);
         }
     }
 }

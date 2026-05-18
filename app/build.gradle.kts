@@ -47,10 +47,14 @@ dependencies {
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
     // Firebase & Google Auth
-    // (PENTING: Akan error merah JIKA kamu belum mengembalikannya ke dalam file libs.versions.toml)
     implementation(libs.firebase.auth)
     implementation(libs.credentials)
     implementation(libs.credentials.play.services.auth)
     implementation(libs.googleid)
+
+    // ✅ TAMBAHKAN INI (inilah yang kurang)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
 
 } // <--- PASTIKAN TANDA KURUNG INI ADA DI PALING BAWAH

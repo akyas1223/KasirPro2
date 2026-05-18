@@ -58,9 +58,16 @@ public class login extends AppCompatActivity {
         // Tombol Kembali
         if (btnBack != null) {
             btnBack.setOnClickListener(v -> {
-                Intent intent = new Intent(login.this, welcome.class);
-                startActivity(intent);
+                startActivity(new Intent(login.this, welcome.class));
                 finish();
+            });
+        }
+
+        // Link ke Daftar
+        android.widget.TextView tvDaftarLink = findViewById(R.id.tvDaftarLink);
+        if (tvDaftarLink != null) {
+            tvDaftarLink.setOnClickListener(v -> {
+                startActivity(new Intent(login.this, register.class));
             });
         }
 

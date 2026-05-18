@@ -4,18 +4,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FD"
-    android:padding="32dp">
+    android:background="#F4F7FF">
 
+    <!-- Tulisan selamat datang diturunkan sedikit -->
     <TextView
         android:id="@+id/tvWelcome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Selamat Datang!"
-        android:textSize="24sp"
+        android:textSize="26sp"
         android:textStyle="bold"
         android:textColor="#1A1A1A"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="80dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -25,8 +25,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Kelola bisnismu jadi lebih profesional"
-        android:textColor="#757575"
+        android:textColor="#7E8FA6"
         android:textSize="14sp"
+        android:layout_marginTop="6dp"
         app:layout_constraintTop_toBottomOf="@id/tvWelcome"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -36,54 +37,52 @@
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:src="@drawable/logo"
-        android:elevation="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnDaftar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvSubtitle" />
-
-    <Button
-        android:id="@+id/btnDaftar"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginBottom="16dp"
-        android:text="Mulai Daftar"
-        android:textAllCaps="false"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:backgroundTint="#2D62ED"
-        app:cornerRadius="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/btnMasuk"
+        android:elevation="4dp"
+        android:layout_marginTop="85dp"
+        app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <Button
-        android:id="@+id/btnMasuk"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:layout_marginBottom="60dp"
-        android:text="Masuk ke Akun"
-        android:textAllCaps="false"
-        android:textSize="16sp"
-        android:textColor="#2D62ED"
-        app:strokeColor="#2D62ED"
-        app:strokeWidth="1.5dp"
-        app:cornerRadius="16dp"
-        app:layout_constraintBottom_toTopOf="@id/footerContainer"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
+    <!-- Grup button + footer dikumpulkan di tengah bawah logo -->
     <LinearLayout
-        android:id="@+id/footerContainer"
-        android:layout_width="wrap_content"
+        android:id="@+id/groupBottom"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:layout_marginTop="80dp"
+        app:layout_constraintTop_toBottomOf="@id/imgLogo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDaftar"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginBottom="12dp"
+            android:text="Mulai Daftar"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:backgroundTint="#2155D3"
+            app:cornerRadius="16dp"
+            app:elevation="2dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnMasuk"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginHorizontal="32dp"
+            android:layout_marginBottom="60dp"
+            android:text="Masuk ke Akun"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:textColor="#2155D3"
+            app:strokeColor="#2155D3"
+            app:strokeWidth="1.5dp"
+            app:cornerRadius="16dp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -95,10 +94,12 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
             android:text="Powered by KASIR Pro"
-            android:textColor="#444444"
+            android:textColor="#7E8FA6"
             android:textStyle="bold"
-            android:textSize="13sp" />
+            android:textSize="12sp" />
+
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

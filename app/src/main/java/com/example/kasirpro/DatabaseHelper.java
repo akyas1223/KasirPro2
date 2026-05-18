@@ -13,7 +13,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "KasirPro.db";
     // FIX: Naikkan versi agar onUpgrade dipanggil ulang dengan logika yang benar
-    public static final int DATABASE_VERSION = 7;
+    public static final int DATABASE_VERSION = 9;
 
     // Tabel User
     public static final String TABLE_USERS = "users";
@@ -23,6 +23,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_NAMA_BISNIS = "nama_bisnis";
     public static final String COL_ALAMAT_BISNIS = "alamat_bisnis";
     public static final String COL_QRIS_PATH = "qris_path";
+    public static final String COL_FOTO_PROFIL = "foto_profil";
 
     // Tabel Produk
     public static final String TABLE_PRODUK = "produk";
@@ -43,6 +44,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_DD = "dd";
     public static final String COL_MM = "mm";
     public static final String COL_YYYY = "yyyy";
+    public static final String COL_JAM = "jam";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -56,7 +58,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COL_PASSWORD + " TEXT, "
                 + COL_NAMA_BISNIS + " TEXT, "
                 + COL_ALAMAT_BISNIS + " TEXT, "
-                + COL_QRIS_PATH + " TEXT)");
+                + COL_QRIS_PATH + " TEXT, "
+                + COL_FOTO_PROFIL + " TEXT)");
 
         db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_PRODUK + " ("
                 + COL_ID_PRODUK + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -74,13 +77,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COL_TOTAL_BAYAR + " INTEGER, "
                 + COL_DD + " TEXT, "
                 + COL_MM + " TEXT, "
-                + COL_YYYY + " TEXT)");
+                + COL_YYYY + " TEXT, " + COL_JAM + " TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // FIX: Jangan drop tabel users agar akun tidak hilang.
-        // Cukup pastikan tabel produk & transaksi punya struktur terbaru.
+        // Tambah kolom foto_profil jika belum ada (upgrade dari versi lama)
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_USERS + " ADD COLUMN " + COL_FOTO_PROFIL + " TEXT");
+        } catch (Exception ignored) { /* kolom sudah ada */ }
+
+        // Tambah kolom jam jika belum ada
+        try {
+            db.execSQL("ALTER TABLE " + TABLE_TRANSAKSI + " ADD COLUMN " + COL_JAM + " TEXT");
+        } catch (Exception ignored) { /* kolom sudah ada */ }
+
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUK);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_TRANSAKSI);
         // Buat ulang hanya tabel produk dan transaksi
@@ -100,10 +111,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + COL_TOTAL_BAYAR + " INTEGER, "
                 + COL_DD + " TEXT, "
                 + COL_MM + " TEXT, "
-                + COL_YYYY + " TEXT)");
+                + COL_YYYY + " TEXT, " + COL_JAM + " TEXT)");
     }
 
     // --- FUNGSI USER ---
+    public boolean updateFotoProfil(String email, String fotoPath) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_FOTO_PROFIL, fotoPath);
+        return db.update(TABLE_USERS, values, COL_EMAIL + "=?", new String[]{email}) > 0;
+    }
+
     public boolean simpanUser(String email, String password, String namaBisnis, String alamatBisnis, String qrisPath) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -135,14 +153,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor cursor = null;
         try {
             cursor = db.query(TABLE_USERS,
-                    new String[]{COL_NAMA_BISNIS, COL_ALAMAT_BISNIS, COL_QRIS_PATH, COL_PASSWORD},
+                    new String[]{COL_NAMA_BISNIS, COL_ALAMAT_BISNIS, COL_QRIS_PATH, COL_PASSWORD, COL_FOTO_PROFIL},
                     COL_EMAIL + " = ?", new String[]{email}, null, null, null);
             if (cursor.moveToFirst()) {
                 return new String[]{
                         cursor.getString(0), // nama_bisnis
                         cursor.getString(1), // alamat_bisnis
                         cursor.getString(2), // qris_path
-                        cursor.getString(3)  // password
+                        cursor.getString(3), // password
+                        cursor.getString(4)  // foto_profil
                 };
             }
         } finally {
@@ -151,7 +170,19 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return null;
     }
 
-    // Update data profil user (email tidak bisa diubah = primary key)
+    public String getFotoProfil(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+        try {
+            cursor = db.query(TABLE_USERS, new String[]{COL_FOTO_PROFIL},
+                    COL_EMAIL + " = ?", new String[]{email}, null, null, null);
+            if (cursor.moveToFirst()) return cursor.getString(0);
+        } finally {
+            if (cursor != null) cursor.close();
+        }
+        return null;
+    }
+
     public boolean updateUser(String email, String namaBaru, String alamatBaru,
                               String passwordBaru, String qrisBaru) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -246,7 +277,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     // --- FUNGSI TRANSAKSI ---
     public boolean simpanTransaksi(String email, String items, String metode, int total,
-                                   String dd, String mm, String yyyy) {
+                                   String dd, String mm, String yyyy, String jam) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COL_EMAIL_TRANS, email);
@@ -256,6 +287,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_DD, dd);
         values.put(COL_MM, mm);
         values.put(COL_YYYY, yyyy);
+        values.put(COL_JAM, jam);
         long result = db.insert(TABLE_TRANSAKSI, null, values);
         return result != -1;
     }
